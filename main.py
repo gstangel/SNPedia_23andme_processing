@@ -13,8 +13,7 @@ def get_documented_snps() -> np.ndarray:
         for i, page in enumerate(site.Categories['Is_a_snp']):#iterate through all SNPs on SNPedia
             snp_array = np.append(snp_array, str(page.name).lower())#append to array
             if i % 10000 == 0: #there are about 100000 snps, 10000 would be 10 percent of total
-                print(i / 1000, " percent complete") #display estimated percentage complete
-        print("100 percent complete, writing pkl")
+                print(i / 1000, " percent complete") #display estimated percentage
         file = open("snps.pkl", "wb")
         pkl.dump(snp_array, file)
         file.close()
