@@ -49,6 +49,8 @@ def catagorize_data() ->
 def create
 documented_SNPs = get_documented_snps()
 your_data = read_your_data()
+
+
 your_studied_genes = process_your_data(your_data, documented_SNPs)
 
 
