@@ -30,26 +30,26 @@ def read_your_data() -> dict:
     print("Processing the raw data.")
     genotypes = {} #dict where genotypes and alleles will be stored
     raw_data = open('raw.txt', 'r')#load raw data from 23andme txt file
-    lines = raw_data.readlines()#line of the raw data, we only need rsid and genotype
-    for line in lines:
+    lines = raw_data.readlines()
+    for line in lines: #line of the raw data, we only need rsid and genotype
         if line[0] != '#': #skip documentation in the raw data
-            split_line = line.split()
-            genotypes[split_line[0]] = split_line[3]
+            split_line = line.split()#we only need rsid and genotype
+            genotypes[split_line[0]] = split_line[3] #make dict key and value
     return genotypes
 
-def process_your_data(your_data, documented_SNPs) -> list:
+#finds SNPS that are both on SNPedia and in your genome
+def get_common_SNPs(your_data, documented_SNPs) -> list:
     your_studied_genes = []
-    print(len(documented_SNPs))
-    print(len(your_data))
-    for SNP in documented_SNPs:
-        if str(SNP) in your_data:
+    for SNP in documented_SNPs:#iterate through all documented SNPs
+        if SNP in your_data: #if the key exists in your data, append it to the list
             your_studied_genes.append(SNP)
     return your_studied_genes
 
+def catagorize_data() -> 
+def create
 documented_SNPs = get_documented_snps()
-your_data = read_your_data() 
-
+your_data = read_your_data()
 your_studied_genes = process_your_data(your_data, documented_SNPs)
 
-print(len(your_studied_genes))
+
 
