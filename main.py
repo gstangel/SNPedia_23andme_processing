@@ -13,7 +13,7 @@ def get_documented_snps() -> np.ndarray:
         for i, page in enumerate(site.Categories['Is_a_snp']):#iterate through all SNPs on SNPedia
             SNP_dict[page.name] = page.text(cache=False)
             if i % 1000 == 0: #there are about 100000 snps, 1000 would be 1 percent of total
-                print(i / 100, " percent complete") #display estimated percentage
+                print(i / 1000, " percent complete") #display estimated percentage
 
         file = open("snps.pkl", "wb")#save the dict as a pickle for processing in other functions
         pkl.dump(snp_array, file,protocol=pickle.HIGHEST_PROTOCOL)
