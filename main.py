@@ -7,21 +7,24 @@ import pickle as pkl
 #get all documented snps from snpedia, writes pickle if its the first run
 def get_documented_snps() -> np.ndarray:
     if not path.exists("snps.pkl"):#checks if already pulled snp data
-        snp_array = np.empty(1) #empty numpy array
+        SNP_dict = {}
         site = mwclient.Site('bots.snpedia.com', path='/')#SNPedia site path
 
         for i, page in enumerate(site.Categories['Is_a_snp']):#iterate through all SNPs on SNPedia
-            snp_array = np.append(snp_array, str(page.name).lower())#append to array
-            if i % 10000 == 0: #there are about 100000 snps, 10000 would be 10 percent of total
-                print(i / 1000, " percent complete") #display estimated percentage
-        file = open("snps.pkl", "wb")
-        pkl.dump(snp_array, file)
+            SNP_dict[page.name] = page.text(cache=False)
+            if i % 1000 == 0: #there are about 100000 snps, 1000 would be 1 percent of total
+                print(i / 100, " percent complete") #display estimated percentage
+
+        file = open("snps.pkl", "wb")#save the dict as a pickle for processing in other functions
+        pkl.dump(snp_array, file,protocol=pickle.HIGHEST_PROTOCOL)
         file.close()
     #if data has already been retrived, load into np array
     else:
         print("data already saved, loading into array")
-        snp_array = np.load("snps.pkl", allow_pickle=True)
-    return snp_array #return np array with complete SNP data
+        with open('snps.pkl', 'rb') as data:
+            SNP_dict = pickle.load(data)
+    return SNP_dict #return np array with complete SNP data
+
 
 
 #transform genome txt data to dict for processing
@@ -44,13 +47,13 @@ def get_common_SNPs(your_data, documented_SNPs) -> list:
             your_studied_genes.append(SNP)
     return your_studied_genes
 
-def catagorize_data() -> 
-def create
+
+
 documented_SNPs = get_documented_snps()
 your_data = read_your_data()
 
 
-your_studied_genes = process_your_data(your_data, documented_SNPs)
+your_studied_genes = get_common_SNPs(your_data, documented_SNPs)
 
 
 
