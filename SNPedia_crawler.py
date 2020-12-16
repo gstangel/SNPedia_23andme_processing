@@ -1,16 +1,13 @@
 import mwclient
 from os import path
 import pickle as pkl
-from time import sleep
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from bs4 import BeautifulSoup
 from os import path
 import lxml
 import numpy as np
-import sys
-import asyncio
-import aiohttp
+import asyncio, aiohttp
 #uses mwclient to pull only unique rsids from SNPedia (~110k individual rsids) and generate cooresponding links for crawling
 #One example link is https://snpedia.com/index.php/Rs1804197
 #The rsid number is a unique label ("rs" followed by a number) used by researchers and databases to identify a specific SNP (Single Nucleotide Polymorphism)
