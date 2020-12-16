@@ -4,10 +4,12 @@ import pickle as pkl
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from bs4 import BeautifulSoup
-from os import path
 import lxml
 import numpy as np
-import asyncio, aiohttp
+import sys
+import asyncio
+import aiohttp
+import progressbar
 #uses mwclient to pull only unique rsids from SNPedia (~110k individual rsids) and generate cooresponding links for crawling
 #One example link is https://snpedia.com/index.php/Rs1804197
 #The rsid number is a unique label ("rs" followed by a number) used by researchers and databases to identify a specific SNP (Single Nucleotide Polymorphism)
@@ -40,24 +42,27 @@ def crawl(rsid_urls) -> dict:
             genotype_table = soup.find_all('table', attrs={'class': 'sortable'}) #find the table on the website with rsid variation data
             variation_data = [] #where all the studied variations and cooresponding information will be stored
             #pulls relevant data from the tables on SNPedia
-            for tr in genotype_table[0].find_all('tr'):
-                for td in tr.find_all('td'):
-                    if '#ff8080' in str(td):#if the color is red, its been determined to be a bad trait
-                        variation_data.append('bad')
-                    if '#80ff80' in str(td):#if the color is green, its been determined to be a good trait
-                        variation_data.append('good')
-                    if '#ffffff' in str(td):#if the color is white, it a neutral trait
-                        variation_data.append('neutral')
-                    variation_data.append(td.text.rstrip())#append alleles for mutation
+            if len(genotype_table) > 0:
+                for tr in genotype_table[0].find_all('tr'):
+                    for td in tr.find_all('td'):
+                        if '#ff8080' in str(td):#if the color is red, its been determined to be a bad trait
+                            variation_data.append('bad')
+                        if '#80ff80' in str(td):#if the color is green, its been determined to be a good trait
+                            variation_data.append('good')
+                        if '#ffffff' in str(td):
+                            variation_data.append('neutral')#if the color is white, it a neutral trait
+                        variation_data.append(td.text.rstrip())#append alleles for mutation
 
             rsid_data[rsid] = np.array(variation_data) #use np array for ram constraints
-            print(len(rsid_data))
+            progress.update(len(rsid_data))
     
     async def start_crawl_asynchronous():
-        with ThreadPoolExecutor(max_workers=100) as executor:
+        with ThreadPoolExecutor(max_workers=150) as executor:
             with requests.Session() as session:
                 loop = asyncio.get_event_loop()
-                tasks = [loop.run_in_executor(executor, fetch, *(session,url)) for url in rsid_urls]
+                for url in rsid_urls:
+                    loop.run_in_executor(executor, fetch, *(session,url))
+    progress = progressbar.ProgressBar(max_value = len(rsid_urls))
     loop = asyncio.get_event_loop()
     future = asyncio.ensure_future(start_crawl_asynchronous())
     loop.run_until_complete(future)
@@ -65,3 +70,4 @@ def crawl(rsid_urls) -> dict:
 
 links = get_rsid_links()
 crawl(links)
+
