@@ -46,8 +46,8 @@ def crawl(rsid_urls) -> dict:
                         variation_data.append('bad')
                     if '#80ff80' in str(td):#if the color is green, its been determined to be a good trait
                         variation_data.append('good')
-                    if '#ffffff' in str(td):
-                        variation_data.append('neutral')#if the color is white, it a neutral trait
+                    if '#ffffff' in str(td):#if the color is white, it a neutral trait
+                        variation_data.append('neutral')
                     variation_data.append(td.text.rstrip())#append alleles for mutation
 
             rsid_data[rsid] = np.array(variation_data) #use np array for ram constraints
