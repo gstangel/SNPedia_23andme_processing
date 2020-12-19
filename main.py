@@ -1,5 +1,4 @@
 import mwclient
-import numpy as np
 from os import path
 import pickle as pkl
 from time import sleep
@@ -7,26 +6,27 @@ from time import sleep
 #get all documented snps from snpedia, writes pickle if its the first run.
 #this data is used to extract keywords to create gene classifications
 #first run took about 4 hours to make requests for all 100k+ genes on SNPedia.
-def get_documented_snps() -> np.ndarray:
+def get_documented_snps() -> list:
     if not path.exists("snps.pkl"):#checks if already pulled snp data
-        SNP_dict = {}
+        snps = []
         site = mwclient.Site('bots.snpedia.com', path='/')#SNPedia site path
 
         for i, page in enumerate(site.Categories['Is_a_snp']):#iterate through all SNPs on SNPedia
-            print(page.text())
-            SNP_dict[page.name] = page.text(cache=False)
+            snps.append(page.name)
+            if(page.name == "Rs1805007"):
+                print(page.text())
             if i % 1000 == 0: #there are about 100000 snps, 1000 would be 1 percent of total
                 print(i/1000, " Percent done") #display estimated percentage
 
         file = open("snps.pkl", "wb")#save the dict as a pickle for processing in other functions
-        pkl.dump(SNP_dict, file,protocol=pkl.HIGHEST_PROTOCOL)
+        pkl.dump(snps, file)
         file.close()
     #if data has already been retrived, load into dict from pickle
     else:
         print("data already saved, loading into program")
         with open('snps.pkl', 'rb') as data:
-            SNP_dict = pkl.load(data)
-    return SNP_dict #return np array with complete SNP data
+            snps = pkl.load(data)
+    return snps #return np array with complete SNP data
 
 
 
@@ -48,11 +48,16 @@ def get_common_SNPs(your_data, documented_snps) -> list:
 
 
 
-documented_SNPs = get_documented_snps()
+snps = get_documented_snps()
 
-your_data = read_your_data()
+txt = open("snps.txt", 'w')
+
+for snp in snps:
+    
+    txt.write(snp+ '\n')
+txt.close()
+
+#your_data = read_your_data()
 
 
-your_studied_genes = get_common_SNPs(your_data, documented_SNPs)
-
-
+#your_studied_genes = get_common_SNPs(your_data, documented_SNPs)

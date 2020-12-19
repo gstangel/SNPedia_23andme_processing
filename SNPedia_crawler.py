@@ -2,7 +2,7 @@ import mwclient
 from os import path
 import pickle as pkl
 import requests
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from bounded_pool_executor import BoundedThreadPoolExecutor
 from bs4 import BeautifulSoup
 import lxml
 import numpy as np
@@ -32,42 +32,59 @@ def get_rsid_links() -> list:
 #returns a dict of all the data for each rsid, uses BeautifulSoup to extract most relevant data
 def crawl(rsid_urls) -> dict:
     rsid_data = {} #where the resulting data will be stored, in the form of ex: 'rs123321':['AA', repute = good, magnitude = 5, description = 'AA' makes for better coders]
-    
     #this function is used to create asyncernous requests
     def fetch(session, url):
-        
-        with session.get(url) as page: #make request for next of the 110k links to be pulled
-            soup = BeautifulSoup(page.content, 'lxml') #'lxml' is much faster than python's html parser
-            rsid = soup.find(id='firstHeading').text #ex: "rs6152", .text converts from soup object to string
-            genotype_table = soup.find_all('table', attrs={'class': 'sortable'}) #find the table on the website with rsid variation data
-            variation_data = [] #where all the studied variations and cooresponding information will be stored
-            #pulls relevant data from the tables on SNPedia
-            if len(genotype_table) > 0:
-                for tr in genotype_table[0].find_all('tr'):
-                    for td in tr.find_all('td'):
-                        if '#ff8080' in str(td):#if the color is red, its been determined to be a bad trait
-                            variation_data.append('bad')
-                        if '#80ff80' in str(td):#if the color is green, its been determined to be a good trait
-                            variation_data.append('good')
-                        if '#ffffff' in str(td):
-                            variation_data.append('neutral')#if the color is white, it a neutral trait
-                        variation_data.append(td.text.rstrip())#append alleles for mutation
+        try:
+            with session.get(url) as page: #make request for next of the 110k links to be pulled
+                print(page.status_code)
+                soup = BeautifulSoup(page.content, 'lxml') #'lxml' is much faster than python's html parser
+                rsid = url[30:len(url)] #ex: "rs6152", .text converts from soup object to string
 
-            rsid_data[rsid] = np.array(variation_data) #use np array for ram constraints
-            progress.update(len(rsid_data))
+                genotype_table = soup.find_all('table', attrs={'class': 'sortable'}) #find the table on the website with rsid variation data
+                variation_data = [] #where all the studied variations and cooresponding information will be stored
+                #pulls relevant data from the tables on SNPedia
+                if len(genotype_table) > 0:
+                    for tr in genotype_table[0].find_all('tr'):
+                        for td in tr.find_all('td'):
+                            if '#ff8080' in str(td):#if the color is red, its been determined to be a bad trait
+                                variation_data.append('bad')
+                            if '#80ff80' in str(td): #if the color is green, its been determined to be a good trait
+                                variation_data.append('good')
+                            if '#ffffff' in str(td):
+                                variation_data.append('neutral') #if the color is white, it a neutral trait
+                            variation_data.append(td.text.rstrip())#append alleles for mutation
+
+                rsid_data[rsid] = np.array(variation_data) #use np array for ram constraints
+                if len(rsid_data) % 100 == 0:
+                    print(len(rsid_data))
+        except Exception as e:
+            print(e)
+            print(url)
+            
     
-    async def start_crawl_asynchronous():
-        with ThreadPoolExecutor(max_workers=150) as executor:
+    def split_urls(rsid_urls) -> list:
+        n=10000 
+        split_urls = [rsid_urls[i * n:(i + 1) * n] for i in range((len(rsid_urls) + n - 1) // n )]  
+        return split_urls
+    
+    def get_data():
+        split_url = split_urls(rsid_urls)
+        #for i in range(len(split_url)):
+        with BoundedThreadPoolExecutor(max_workers=10) as executor:
             with requests.Session() as session:
-                loop = asyncio.get_event_loop()
-                for url in rsid_urls:
-                    loop.run_in_executor(executor, fetch, *(session,url))
-    progress = progressbar.ProgressBar(max_value = len(rsid_urls))
-    loop = asyncio.get_event_loop()
-    future = asyncio.ensure_future(start_crawl_asynchronous())
-    loop.run_until_complete(future)
+                for url in split_url[0]:
+                    executor.submit(fetch,*(session,url))
+        with open('crawl_result0.pkl', 'wb') as handle:
+            pkl.dump(rsid_data, handle, protocol=pkl.HIGHEST_PROTOCOL)
+                
+    get_data()
+
+  
+
+    
+    
+
     
 
 links = get_rsid_links()
 crawl(links)
-
