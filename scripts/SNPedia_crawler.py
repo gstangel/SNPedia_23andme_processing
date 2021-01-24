@@ -78,13 +78,7 @@ def crawl(rsid_urls) -> dict:
             pkl.dump(rsid_data, handle, protocol=pkl.HIGHEST_PROTOCOL)
                 
     get_data()
-
-  
-
     
-    
-
-    
-
-links = get_rsid_links()
-crawl(links)
+if __name__ == "__main__":
+    links = get_rsid_links()
+    crawl(links)
